@@ -14,9 +14,7 @@ import (
 )
 
 func TestFetchHistoricCandles_Integration(t *testing.T) {
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelDebug},
-	)))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
 	accountID := os.Getenv("OANDA_ACCOUNT_ID")
 	if accountID == "" {

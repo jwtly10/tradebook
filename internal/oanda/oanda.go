@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/jwtly10/tradebook/internal/types"
 )
 
 const (
@@ -43,13 +45,13 @@ func NewOandaService(accountId, apiKey, apiUrl string) *OandaService {
 	}
 }
 
-func (s *OandaService) FetchBars(ctx context.Context, req CandleRequest) ([]Bar, error) {
+func (s *OandaService) FetchBars(ctx context.Context, req CandleRequest) ([]types.Bar, error) {
 	resp, err := s.fetchHistoricCandles(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	bars := make([]Bar, 0, len(resp.Candles))
+	bars := make([]types.Bar, 0, len(resp.Candles))
 	for _, candle := range resp.Candles {
 		timestamp, err := time.Parse(time.RFC3339, candle.Time)
 		if err != nil {
@@ -63,7 +65,7 @@ func (s *OandaService) FetchBars(ctx context.Context, req CandleRequest) ([]Bar,
 		c, _ := strconv.ParseFloat(string(candle.Mid.C), 64)
 		v := float64(candle.Volume)
 
-		bars = append(bars, Bar{
+		bars = append(bars, types.Bar{
 			Timestamp: timestamp,
 			Open:      o,
 			High:      h,

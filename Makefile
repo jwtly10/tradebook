@@ -8,6 +8,13 @@ test:
 	@echo "Running unit tests..."
 	@go test -v ./...
 
+coverage:
+	@echo "Generating test coverage report..."
+	@go test -coverprofile=coverage.out ./...
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated at coverage.html. Opening"
+	open coverage.html
+
 integration-test:
 	@echo "Running integration tests..."
 	@go test -v -tags=integration ./...
