@@ -25,8 +25,8 @@ func main() {
 	}
 	client := oanda.NewOandaService(accountId, apiKey, "")
 
-	from := time.Now().AddDate(0, -1, 0)
-	to := time.Now()
+	from := time.Date(2025, 10, 23, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2025, 10, 24, 0, 0, 0, 0, time.UTC)
 
 	req := oanda.CandleRequest{
 		Instrument:  oanda.NAS100,

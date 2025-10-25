@@ -75,6 +75,8 @@ func (s *OandaService) FetchBars(ctx context.Context, req CandleRequest) ([]type
 		})
 	}
 
+	slog.Debug("Fetched bars", "count", len(bars), "firstBar", bars[0], "lastBar", bars[len(bars)-1])
+
 	return bars, nil
 }
 

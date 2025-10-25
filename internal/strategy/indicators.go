@@ -127,20 +127,22 @@ func (a *ATR) Ready() bool {
 
 // ATRCandle - Custom indicator that detects ATR violations with engulfing pattern
 type ATRCandle struct {
-	atrPeriod      int
-	atrMultiplier  float64
-	relativeSize   float64
-	atr            *ATR
-	prevBar        *types.Bar
-	violationCount int
+	atrPeriod        int
+	atrMultiplier    float64
+	withRelativeSize bool
+	relativeSize     float64
+	atr              *ATR
+	prevBar          *types.Bar
+	violationCount   int
 }
 
-func NewATRCandle(atrPeriod int, atrMultiplier, relativeSize float64) *ATRCandle {
+func NewATRCandle(atrPeriod int, atrMultiplier, relativeSize float64, withRelativeSize bool) *ATRCandle {
 	return &ATRCandle{
-		atrPeriod:     atrPeriod,
-		atrMultiplier: atrMultiplier,
-		relativeSize:  relativeSize,
-		atr:           NewATR(atrPeriod),
+		atrPeriod:        atrPeriod,
+		atrMultiplier:    atrMultiplier,
+		withRelativeSize: withRelativeSize,
+		relativeSize:     relativeSize,
+		atr:              NewATR(atrPeriod),
 	}
 }
 
@@ -149,6 +151,7 @@ func (a *ATRCandle) Update(bar types.Bar) {
 
 	if a.atr.Ready() {
 		if a.checkViolation(bar) {
+			slog.Debug("ATRCandle violation detected", "bar", bar)
 			a.violationCount++
 		}
 	}
@@ -170,6 +173,10 @@ func (a *ATRCandle) checkViolation(currentBar types.Bar) bool {
 		return atrViolation
 	}
 
+	if !a.withRelativeSize {
+		return atrViolation
+	}
+
 	// Previous candle body size
 	prevAbsDiff := math.Abs(a.prevBar.Close - a.prevBar.Open)
 
@@ -177,6 +184,8 @@ func (a *ATRCandle) checkViolation(currentBar types.Bar) bool {
 	relativeThreshold := prevAbsDiff * a.relativeSize
 	isEngulfing := absDiff > relativeThreshold
 
+	// Trading View debugging
+	// slog.Debug("Debugging", "Current candle size", absDiff, "atrThreshold", atrThreshold, "previousCandle", prevAbsDiff)
 	// Both conditions must be true
 	return atrViolation && isEngulfing
 }

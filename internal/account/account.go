@@ -54,7 +54,7 @@ func NewAccount(initialBalance float64) *Account {
 }
 
 func (a *Account) OpenTrade(signal types.Signal, timestamp time.Time) *Position {
-	slog.Debug("Opening trade", "action", signal.Action, "price", signal.Price, "size", signal.Size, "tp", signal.TP, "sl", signal.SL, "timestamp", timestamp)
+	slog.Info("Opening trade", "action", signal.Action, "price", signal.Price, "size", signal.Size, "tp", signal.TP, "sl", signal.SL, "timestamp", timestamp)
 	// TODO: Check if we have enough balance/margin
 	// TODO: Apply risk management rules
 	// OR potentially delegate this to the caller only
@@ -96,13 +96,13 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 			// Check stop loss
 			slog.Debug("Checking LONG position for exits", "position_id", pos.ID, "stop_loss", pos.StopLoss, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "bar_high", bar.High, "timestamp", bar.Timestamp)
 			if bar.Low <= pos.StopLoss {
-				slog.Debug("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_low", bar.Low, "timestamp", bar.Timestamp)
+				slog.Info("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_low", bar.Low, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.StopLoss, bar.Timestamp, "STOP_LOSS")
 				closed = true
 			}
 			// Check take profit
 			if bar.High >= pos.TakeProfit {
-				slog.Debug("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_high", bar.High, "timestamp", bar.Timestamp)
+				slog.Info("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_high", bar.High, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.TakeProfit, bar.Timestamp, "TAKE_PROFIT")
 				closed = true
 			}
@@ -110,13 +110,13 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 			slog.Debug("Checking SHORT position for exits", "position_id", pos.ID, "stop_loss", pos.StopLoss, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "bar_high", bar.High, "timestamp", bar.Timestamp)
 			// Check stop loss
 			if bar.High >= pos.StopLoss {
-				slog.Debug("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_high", bar.High, "timestamp", bar.Timestamp)
+				slog.Info("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_high", bar.High, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.StopLoss, bar.Timestamp, "STOP_LOSS")
 				closed = true
 			}
 			// Check take profit
 			if bar.Low <= pos.TakeProfit {
-				slog.Debug("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "timestamp", bar.Timestamp)
+				slog.Info("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.TakeProfit, bar.Timestamp, "TAKE_PROFIT")
 				closed = true
 			}
@@ -124,7 +124,7 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 
 		if closed {
 			closedTrades = append(closedTrades, trade)
-			slog.Debug("Closed trade", "id", trade.ID, "exit_price", trade.ExitPrice, "pnl", trade.PnL, "reason", trade.ExitReason)
+			slog.Info("Closed trade", "id", trade.ID, "exit_price", trade.ExitPrice, "pnl", trade.PnL, "reason", trade.ExitReason)
 		} else {
 			remainingPositions = append(remainingPositions, pos)
 		}
