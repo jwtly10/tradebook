@@ -5,6 +5,8 @@ import "time"
 const (
 	BUY  Action = "BUY"
 	SELL Action = "SELL"
+
+	OPEN Type = "OPEN_TRADE"
 )
 
 type Bar struct {
@@ -17,9 +19,10 @@ type Bar struct {
 }
 
 type Action string
+type Type string
 
 type Signal struct {
-	Type   string // OPEN_TRADE
+	Type   Type   // OPEN_TRADE
 	Action Action // "BUY", "SELL"
 	Price  float64
 	TP     float64

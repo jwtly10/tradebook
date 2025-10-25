@@ -136,14 +136,31 @@ func (s *Statistics) Print() {
 func (r *Results) PrintTrades() {
 	fmt.Println("\n=== Trade List ===")
 	for i, trade := range r.Trades {
-		fmt.Printf("#%d | %s | Entry: %.5f | Exit: %.5f | P&L: £%.2f | %s | %s\n",
+		fmt.Printf("#%d | %s | Entry: %.5f @ %s | Exit: %.5f @ %s | P&L: £%.2f | %s\n",
 			i+1,
 			trade.Direction,
 			trade.EntryPrice,
+			trade.EntryTime.Format("2006-01-02 15:04"),
 			trade.ExitPrice,
+			trade.ExitTime.Format("2006-01-02 15:04"),
 			trade.PnL,
 			trade.ExitReason,
+		)
+	}
+}
+
+func (r *Results) PrintTradesBetween(i, j int) {
+	fmt.Println("\n=== Trade List ===")
+	for index, trade := range r.Trades[i:j] {
+		fmt.Printf("#%d | %s | Entry: %.5f @ %s | Exit: %.5f @ %s | P&L: £%.2f | %s\n",
+			i+index+1,
+			trade.Direction,
+			trade.EntryPrice,
 			trade.EntryTime.Format("2006-01-02 15:04"),
+			trade.ExitPrice,
+			trade.ExitTime.Format("2006-01-02 15:04"),
+			trade.PnL,
+			trade.ExitReason,
 		)
 	}
 }

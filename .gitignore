@@ -34,3 +34,6 @@ go.work.sum
 # .vscode/
 
 ./bin
+
+# Private strategies: TODO submodule or similar
+internal/strategy/*_private.go

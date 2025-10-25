@@ -28,7 +28,7 @@ type Trade struct {
 	ID         int
 	EntryTime  time.Time
 	ExitTime   time.Time
-	Direction  string
+	Direction  Direction
 	EntryPrice float64
 	ExitPrice  float64
 	Size       float64
@@ -61,9 +61,9 @@ func (a *Account) OpenTrade(signal types.Signal, timestamp time.Time) *Position 
 
 	var dir Direction
 	switch signal.Action {
-	case types.ACTION_BUY:
+	case types.BUY:
 		dir = LONG
-	case types.ACTION_SELL:
+	case types.SELL:
 		dir = SHORT
 	}
 
@@ -92,7 +92,7 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 		closed := false
 		var trade Trade
 
-		if pos.Direction == DIR_LONG {
+		if pos.Direction == LONG {
 			// Check stop loss
 			slog.Debug("Checking LONG position for exits", "position_id", pos.ID, "stop_loss", pos.StopLoss, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "bar_high", bar.High, "timestamp", bar.Timestamp)
 			if bar.Low <= pos.StopLoss {
