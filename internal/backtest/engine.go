@@ -38,11 +38,17 @@ func (e *Engine) Run(strategy strategy.Strategy) *Results {
 		closedTrades := acc.CheckExits(bar)
 		results.Trades = append(results.Trades, closedTrades...)
 
+		// Strategy logic is done based on a completed full bar of data
 		signals := strategy.OnBar(e.Bars, i, acc)
 
 		for _, signal := range signals {
 			if signal.Type == OPEN_TRADE {
-				acc.OpenTrade(signal, bar.Timestamp)
+				if i < len(e.Bars)-1 {
+					// Prefer to open the trade on the 'open', rather than the close of the bar
+					// This is just a logistical point for marrying up timestamps to TV
+					nextBar := e.Bars[i+1]
+					acc.OpenTrade(signal, nextBar.Timestamp)
+				}
 			}
 		}
 	}
