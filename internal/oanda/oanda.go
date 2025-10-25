@@ -28,40 +28,8 @@ const (
 
 	// Oanda Instruments
 	GBPUSD InstrumentName = "GBP_USD"
+	NAS100 InstrumentName = "NAS100_USD"
 )
-
-type Candlestick struct {
-	Time     string          `json:"time"`
-	Bid      CandleStickData `json:"bid"`
-	Ask      CandleStickData `json:"ask"`
-	Mid      CandleStickData `json:"mid"`
-	Volume   int             `json:"volume"`
-	Complete bool            `json:"complete"`
-}
-
-type CandleStickData struct {
-	O PriceValue `json:"o"`
-	H PriceValue `json:"h"`
-	L PriceValue `json:"l"`
-	C PriceValue `json:"c"`
-}
-
-type PriceValue string
-type InstrumentName string
-
-type CandlestickGranularity string
-
-type CandlestickResponse struct {
-	Candles     []Candlestick          `json:"candles"`
-	Instrument  InstrumentName         `json:"instrument"`
-	Granularity CandlestickGranularity `json:"granularity"`
-}
-
-type OandaService struct {
-	AccountId string
-	ApiKey    string
-	ApiUrl    string
-}
 
 func NewOandaService(accountId, apiKey, apiUrl string) *OandaService {
 	if apiUrl == "" {
@@ -75,15 +43,40 @@ func NewOandaService(accountId, apiKey, apiUrl string) *OandaService {
 	}
 }
 
-type CandleRequest struct {
-	Instrument  InstrumentName         `json:"instrument"`
-	Granularity CandlestickGranularity `json:"granularity,omitempty"` // Default S5
-	Count       int                    `json:"count,omitempty"`       // Default 500, max 5000
-	From        time.Time              `json:"from"`                  // RFC 3339
-	To          time.Time              `json:"to"`                    // RFC 3339
+func (s *OandaService) FetchBars(ctx context.Context, req CandleRequest) ([]Bar, error) {
+	resp, err := s.fetchHistoricCandles(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	bars := make([]Bar, 0, len(resp.Candles))
+	for _, candle := range resp.Candles {
+		timestamp, err := time.Parse(time.RFC3339, candle.Time)
+		if err != nil {
+			slog.Warn("Failed to parse candle time", "time", candle.Time, "error", err)
+			continue
+		}
+
+		o, _ := strconv.ParseFloat(string(candle.Mid.O), 64)
+		h, _ := strconv.ParseFloat(string(candle.Mid.H), 64)
+		l, _ := strconv.ParseFloat(string(candle.Mid.L), 64)
+		c, _ := strconv.ParseFloat(string(candle.Mid.C), 64)
+		v := float64(candle.Volume)
+
+		bars = append(bars, Bar{
+			Timestamp: timestamp,
+			Open:      o,
+			High:      h,
+			Low:       l,
+			Close:     c,
+			Volume:    v,
+		})
+	}
+
+	return bars, nil
 }
 
-func (s *OandaService) FetchHistoricCandles(ctx context.Context, req CandleRequest) (*CandlestickResponse, error) {
+func (s *OandaService) fetchHistoricCandles(ctx context.Context, req CandleRequest) (*CandlestickResponse, error) {
 	endpoint := s.ApiUrl + "/v3/accounts/" + s.AccountId + "/instruments/" + string(req.Instrument) + "/candles"
 
 	params := url.Values{}

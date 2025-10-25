@@ -1,4 +1,8 @@
-.PHONY: test integration-test lint build
+.PHONY: run test integration-test lint build
+
+run:
+	@echo "Running Tradebook..."
+	@go run ./cmd/tradebook/main.go
 
 test:
 	@echo "Running unit tests..."
@@ -14,7 +18,7 @@ lint:
 
 build: lint test
 	@echo "Building the project..."
-	@go build -o bin/tradebook ./main.go
+	@go build -o bin/tradebook ./cmd/tradebook/main.go
 
 all: lint test integration-test build
 	@echo "All tasks completed successfully."
