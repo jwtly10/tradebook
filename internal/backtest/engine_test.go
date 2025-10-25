@@ -92,3 +92,33 @@ func TimeFromString(timeStr string) (t time.Time) {
 	t, _ = time.Parse(time.RFC3339, timeStr)
 	return
 }
+
+// GetBalanceToRisk implements strategy.Strategy.
+func (s *TestStrategy) GetBalanceToRisk() float64 {
+	panic("unimplemented - not under test")
+}
+
+// GetPeriod implements strategy.Strategy.
+func (s *TestStrategy) GetPeriod() string {
+	panic("unimplemented - not under test")
+}
+
+// GetRiskPercentage implements strategy.Strategy.
+func (s *TestStrategy) GetRiskPercentage() float64 {
+	panic("unimplemented - not under test")
+}
+
+// GetRiskRatio implements strategy.Strategy.
+func (s *TestStrategy) GetRiskRatio() float64 {
+	panic("unimplemented - not under test")
+}
+
+// GetStopLossPips implements strategy.Strategy.
+func (s *TestStrategy) GetStopLossPips() int {
+	panic("unimplemented - not under test")
+}
+
+// GetSymbol implements strategy.Strategy.
+func (s *TestStrategy) GetSymbol() string {
+	panic("unimplemented - not under test")
+}

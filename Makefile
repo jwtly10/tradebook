@@ -15,16 +15,25 @@ coverage:
 	@echo "Coverage report generated at coverage.html. Opening"
 	open coverage.html
 
+test-strategy:
+	@echo "Running strategy tests..."
+	@go test -count=1 -v -tags=integration ./internal/backtest
+
 integration-test:
 	@echo "Running integration tests..."
 	@go test -v -tags=integration ./...
+
+build: lint test
+	@echo "Building the project..."
+	@go build -o bin/tradebook ./cmd/tradebook/main.go
 
 lint:
 	@echo "Running linters..."
 	@golangci-lint run
 
-push: lint test integration-test
+push: 
 	@echo "Running pre push checks"
+	@make do-push
 
-all: lint test integration-test build
-	@echo "All tasks completed successfully."
+do-push: lint test integration-test
+	@echo "All pre push checks passed."

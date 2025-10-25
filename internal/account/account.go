@@ -15,10 +15,16 @@ const (
 
 type Direction string
 
+type Account struct {
+	Balance        float64
+	openPositions  []*Position
+	nextPositionID int
+}
+
 type Position struct {
 	ID         int
 	OpenTime   time.Time
-	Direction  Direction // "LONG" or "SHORT"
+	Direction  Direction
 	EntryPrice float64
 	Size       float64
 	StopLoss   float64
@@ -51,12 +57,6 @@ func (t Trade) Print() {
 		t.PnL,
 		t.ExitReason,
 	)
-}
-
-type Account struct {
-	Balance        float64
-	openPositions  []*Position
-	nextPositionID int
 }
 
 func NewAccount(initialBalance float64) *Account {
@@ -148,10 +148,12 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 func (a *Account) closePosition(pos *Position, exitPrice float64, exitTime time.Time, reason string) Trade {
 	var pnl float64
 
-	if pos.Direction == "LONG" {
+	if pos.Direction == LONG {
 		pnl = (exitPrice - pos.EntryPrice) * pos.Size
+		slog.Debug("Calculating PnL for LONG", "exit_price", exitPrice, "entry_price", pos.EntryPrice, "size", pos.Size, "pnl", pnl)
 	} else { // SHORT
 		pnl = (pos.EntryPrice - exitPrice) * pos.Size
+		slog.Debug("Calculating PnL for SHORT", "exit_price", exitPrice, "entry_price", pos.EntryPrice, "size", pos.Size, "pnl", pnl)
 	}
 
 	a.Balance += pnl

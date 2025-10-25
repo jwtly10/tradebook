@@ -15,6 +15,10 @@ var (
 	smaLog       = logging.New("sma")
 )
 
+type Indicator interface {
+	Ready() bool
+}
+
 // EMA - Exponential Moving Average
 type EMA struct {
 	period int

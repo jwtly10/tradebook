@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/jwtly10/tradebook/internal/account"
+	"github.com/jwtly10/tradebook/internal/strategy"
 	"github.com/jwtly10/tradebook/internal/types"
 )
 
@@ -23,11 +24,7 @@ func NewEngine(bars []types.Bar, initialBalance float64) *Engine {
 	}
 }
 
-type Strategy interface {
-	OnBar(bars []types.Bar, currentIndex int, account *account.Account) []types.Signal
-}
-
-func (e *Engine) Run(strategy Strategy) *Results {
+func (e *Engine) Run(strategy strategy.Strategy) *Results {
 	acc := account.NewAccount(e.initialBalance)
 	results := &Results{
 		InitialBalance: 10000,

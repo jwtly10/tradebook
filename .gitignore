@@ -36,8 +36,8 @@ go.work.sum
 ./bin
 
 # Private strategies: TODO submodule or similar
-internal/strategy/*_private.go
-internal/strategy/*_private_test.go
+*_private.go
+*_private_test.go
 
 .claude
 CLAUDE.md

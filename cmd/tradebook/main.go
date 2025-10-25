@@ -46,7 +46,7 @@ func main() {
 
 	slog.Info("Loaded bars", "count", len(bars))
 
-	strategy := strategy.NewDJATRStrategy()
+	strategy := strategy.NewDJATRStrategy(string(req.Instrument), string(req.Granularity))
 
 	engine := backtest.NewEngine(bars, 10000)
 	results := engine.Run(strategy)

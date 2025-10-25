@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+func SetDebug() {
+	// Configure slog to DEBUG level
+	configureSlog()
+}
+
 // Logger provides topic-based debug logging with minimal overhead when disabled
 type Logger struct {
 	topic   string
