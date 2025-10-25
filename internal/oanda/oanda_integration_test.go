@@ -49,9 +49,10 @@ func TestFetchHistoricCandles_Integration(t *testing.T) {
 	assert.True(t, len(resp.Candles) > 0, "expected at least one candle")
 
 	t.Logf("Fetched %d candles for %s", len(resp.Candles), req.Instrument)
+	t.Logf("First candle: %+v", resp.Candles[0])
 }
 
-func TestCanLoadBars_Integration(t *testing.T) {
+func TestCanLoadBatchedBars_Integration(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelDebug},
 	)))
@@ -69,12 +70,13 @@ func TestCanLoadBars_Integration(t *testing.T) {
 	oanda := NewOandaService(accountID, apiKey, "")
 
 	now := time.Now()
-	yesterday := now.Add(-24 * time.Hour)
+	// Minus 2 months
+	from := now.AddDate(0, -2, 0)
 
 	req := CandleRequest{
 		Instrument:  NAS100,
 		Granularity: M15,
-		From:        yesterday,
+		From:        from,
 		To:          now,
 	}
 
