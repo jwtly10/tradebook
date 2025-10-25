@@ -1,6 +1,7 @@
 package account
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -39,6 +40,19 @@ type Trade struct {
 	ExitReason string
 }
 
+func (t Trade) Print() {
+	fmt.Printf("#%d | %s | Entry: %.5f @ %s | Exit: %.5f @ %s | P&L: £%.2f | %s\n",
+		t.ID,
+		t.Direction,
+		t.EntryPrice,
+		t.EntryTime.Format("2006-01-02 15:04"),
+		t.ExitPrice,
+		t.ExitTime.Format("2006-01-02 15:04"),
+		t.PnL,
+		t.ExitReason,
+	)
+}
+
 type Account struct {
 	Balance        float64
 	openPositions  []*Position
@@ -54,7 +68,7 @@ func NewAccount(initialBalance float64) *Account {
 }
 
 func (a *Account) OpenTrade(signal types.Signal, timestamp time.Time) *Position {
-	slog.Info("Opening trade", "action", signal.Action, "price", signal.Price, "size", signal.Size, "tp", signal.TP, "sl", signal.SL, "timestamp", timestamp)
+	slog.Info("Opening trade", "action", signal.Action, "id", a.nextPositionID, "price", signal.Price, "size", signal.Size, "tp", signal.TP, "sl", signal.SL, "timestamp", timestamp)
 	// TODO: Check if we have enough balance/margin
 	// TODO: Apply risk management rules
 	// OR potentially delegate this to the caller only
@@ -94,29 +108,27 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 
 		if pos.Direction == LONG {
 			// Check stop loss
-			slog.Debug("Checking LONG position for exits", "position_id", pos.ID, "stop_loss", pos.StopLoss, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "bar_high", bar.High, "timestamp", bar.Timestamp)
 			if bar.Low <= pos.StopLoss {
-				slog.Info("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_low", bar.Low, "timestamp", bar.Timestamp)
+				slog.Debug("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_low", bar.Low, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.StopLoss, bar.Timestamp, "STOP_LOSS")
 				closed = true
 			}
 			// Check take profit
 			if bar.High >= pos.TakeProfit {
-				slog.Info("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_high", bar.High, "timestamp", bar.Timestamp)
+				slog.Debug("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_high", bar.High, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.TakeProfit, bar.Timestamp, "TAKE_PROFIT")
 				closed = true
 			}
 		} else { // DIR_SHORT
-			slog.Debug("Checking SHORT position for exits", "position_id", pos.ID, "stop_loss", pos.StopLoss, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "bar_high", bar.High, "timestamp", bar.Timestamp)
 			// Check stop loss
 			if bar.High >= pos.StopLoss {
-				slog.Info("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_high", bar.High, "timestamp", bar.Timestamp)
+				slog.Debug("Stop loss hit", "position_id", pos.ID, "stop_loss", pos.StopLoss, "bar_high", bar.High, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.StopLoss, bar.Timestamp, "STOP_LOSS")
 				closed = true
 			}
 			// Check take profit
 			if bar.Low <= pos.TakeProfit {
-				slog.Info("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "timestamp", bar.Timestamp)
+				slog.Debug("Take profit hit", "position_id", pos.ID, "take_profit", pos.TakeProfit, "bar_low", bar.Low, "timestamp", bar.Timestamp)
 				trade = a.closePosition(pos, pos.TakeProfit, bar.Timestamp, "TAKE_PROFIT")
 				closed = true
 			}
@@ -124,7 +136,6 @@ func (a *Account) CheckExits(bar types.Bar) []Trade {
 
 		if closed {
 			closedTrades = append(closedTrades, trade)
-			slog.Info("Closed trade", "id", trade.ID, "exit_price", trade.ExitPrice, "pnl", trade.PnL, "reason", trade.ExitReason)
 		} else {
 			remainingPositions = append(remainingPositions, pos)
 		}
@@ -145,7 +156,7 @@ func (a *Account) closePosition(pos *Position, exitPrice float64, exitTime time.
 
 	a.Balance += pnl
 
-	slog.Debug("Position closed", "id", pos.ID, "direction", pos.Direction, "entry_price", pos.EntryPrice, "exit_price", exitPrice, "pnl", pnl, "new_balance", a.Balance)
+	slog.Info("Closed position", "id", pos.ID, "exit_price", exitPrice, "stop_loss", pos.StopLoss, "take_profit", pos.TakeProfit, "pnl", pnl, "reason", reason, "timestamp", exitTime)
 
 	return Trade{
 		ID:         pos.ID,

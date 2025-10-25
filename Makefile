@@ -23,9 +23,8 @@ lint:
 	@echo "Running linters..."
 	@golangci-lint run
 
-build: lint test
-	@echo "Building the project..."
-	@go build -o bin/tradebook ./cmd/tradebook/main.go
+push: lint test integration-test
+	@echo "Running pre push checks"
 
 all: lint test integration-test build
 	@echo "All tasks completed successfully."

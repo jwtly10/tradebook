@@ -1,8 +1,6 @@
 package backtest
 
 import (
-	"log/slog"
-	"os"
 	"testing"
 	"time"
 
@@ -12,8 +10,6 @@ import (
 )
 
 func TestEngine_RunAndCanOpenAndCloseTrades(t *testing.T) {
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})))
-
 	bars := []types.Bar{
 		{
 			Timestamp: TimeFromString("2024-01-01T00:00:00Z"),

@@ -4,7 +4,15 @@ import (
 	"log/slog"
 	"math"
 
+	"github.com/jwtly10/tradebook/internal/logging"
 	"github.com/jwtly10/tradebook/internal/types"
+)
+
+var (
+	atrLog       = logging.New("atr")
+	atrCandleLog = logging.New("atrcandle")
+	emaLog       = logging.New("ema")
+	smaLog       = logging.New("sma")
 )
 
 // EMA - Exponential Moving Average
@@ -23,11 +31,14 @@ func NewEMA(period int) *EMA {
 }
 
 func (e *EMA) Update(price float64) {
+	oldValue := e.value
 	if !e.init {
 		e.value = price
 		e.init = true
+		emaLog.Debug("EMA initialized", "period", e.period, "price", price, "value", e.value)
 	} else {
 		e.value = (price * e.alpha) + (e.value * (1 - e.alpha))
+		emaLog.Debug("EMA updated", "period", e.period, "price", price, "oldValue", oldValue, "newValue", e.value)
 	}
 }
 
@@ -57,6 +68,7 @@ func (s *SMA) Update(price float64) {
 	if len(s.values) > s.period {
 		s.values = s.values[1:]
 	}
+	smaLog.Debug("SMA updated", "period", s.period, "price", price, "value", s.Value(), "ready", s.Ready())
 }
 
 func (s *SMA) Value() float64 {
@@ -95,6 +107,7 @@ func NewATR(period int) *ATR {
 func (a *ATR) Update(bar types.Bar) {
 	if a.prevBar == nil {
 		a.prevBar = &bar
+		atrLog.Debug("ATR first bar", "timestamp", bar.Timestamp, "close", bar.Close)
 		return
 	}
 
@@ -108,6 +121,14 @@ func (a *ATR) Update(bar types.Bar) {
 
 	tr := math.Max(tr1, math.Max(tr2, tr3))
 
+	atrLog.Debug("ATR calculation",
+		"timestamp", bar.Timestamp,
+		"tr1", tr1,
+		"tr2", tr2,
+		"tr3", tr3,
+		"trueRange", tr,
+		"prevATR", a.ema.Value())
+
 	a.ema.Update(tr)
 	a.prevBar = &bar
 
@@ -115,6 +136,12 @@ func (a *ATR) Update(bar types.Bar) {
 	if a.warmup >= a.period {
 		a.ready = true
 	}
+
+	atrLog.Debug("ATR updated",
+		"timestamp", bar.Timestamp,
+		"value", a.Value(),
+		"ready", a.Ready(),
+		"warmup", a.warmup)
 }
 
 func (a *ATR) Value() float64 {
@@ -151,8 +178,13 @@ func (a *ATRCandle) Update(bar types.Bar) {
 
 	if a.atr.Ready() {
 		if a.checkViolation(bar) {
-			slog.Debug("ATRCandle violation detected", "bar", bar)
+			atrCandleLog.Info("ATRCandle violation detected", "timestamp", bar.Timestamp, "close", bar.Close, "open", bar.Open)
 			a.violationCount++
+		} else {
+			// TODO: I don't *love* this - it means we do not have access to historic indicator values
+			// but may not be needed in all honesty - this is way more performant so potentially
+			// acceptable tradeoff, until we need otherwise
+			a.violationCount = 0
 		}
 	}
 
@@ -167,9 +199,17 @@ func (a *ATRCandle) checkViolation(currentBar types.Bar) bool {
 	atrThreshold := a.atr.Value() * a.atrMultiplier
 	atrViolation := absDiff > atrThreshold
 
+	atrCandleLog.Debug("ATRCandle check",
+		"timestamp", currentBar.Timestamp,
+		"candleSize", absDiff,
+		"atrValue", a.atr.Value(),
+		"atrThreshold", atrThreshold,
+		"withRelativeSize", a.withRelativeSize,
+		"atrViolation", atrViolation)
+
 	// Can't check engulfing pattern without previous bar
 	if a.prevBar == nil {
-		slog.Warn("Previous bar is nil, cannot check engulfing pattern. Returning ATR violation only.")
+		slog.Warn("Previous bar is nil, cannot check engulfing pattern")
 		return atrViolation
 	}
 
@@ -184,8 +224,12 @@ func (a *ATRCandle) checkViolation(currentBar types.Bar) bool {
 	relativeThreshold := prevAbsDiff * a.relativeSize
 	isEngulfing := absDiff > relativeThreshold
 
-	// Trading View debugging
-	// slog.Debug("Debugging", "Current candle size", absDiff, "atrThreshold", atrThreshold, "previousCandle", prevAbsDiff)
+	atrCandleLog.Debug("ATRCandle engulfing check",
+		"prevCandleSize", prevAbsDiff,
+		"relativeThreshold", relativeThreshold,
+		"isEngulfing", isEngulfing,
+		"finalResult", atrViolation && isEngulfing)
+
 	// Both conditions must be true
 	return atrViolation && isEngulfing
 }
@@ -198,17 +242,6 @@ func (a *ATRCandle) Value() float64 {
 	return 0.0
 }
 
-// LastViolation returns true if the last bar processed was a violation
-func (a *ATRCandle) LastViolation() bool {
-	// This would require tracking which bar was the violation
-	// For now, just return if we've had any violations
-	return a.violationCount > 0
-}
-
 func (a *ATRCandle) Ready() bool {
 	return a.atr.Ready() && a.prevBar != nil
-}
-
-func (a *ATRCandle) RequiredPeriods() int {
-	return a.atrPeriod + 1 // +1 for previous bar comparison
 }

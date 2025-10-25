@@ -39,5 +39,5 @@ go.work.sum
 internal/strategy/*_private.go
 internal/strategy/*_private_test.go
 
-.claude/
+.claude
 CLAUDE.md
